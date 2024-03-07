@@ -1,21 +1,21 @@
 #pragma once
 
-#include "figure.hpp"
+#include "Figure.hpp"
+#include "Color.hpp"
 
 class Bishop : public Figure
 {
 public:
-	Bishop(FigureColor fc) : Figure(Figures::bishop,fc) {}
+	Bishop(Color fc) : Figure(Figures::bishop, fc)
+	{
+	}
 
 
 	MoveSchema getMoveSchema() const override
 	{
-		MoveSchema ms{ Directions::diagonal, Length::noLimit, Modifiers::none };
-
 		return ms;
 	}
 
 private:
-
+	MoveSchema ms{Directions::diagonal, Length::noLimit, Modifiers::none};
 };
-

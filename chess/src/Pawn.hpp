@@ -1,11 +1,14 @@
 #pragma once
 
-#include "figure.hpp"
+#include "Figure.hpp"
+#include "Color.hpp"
 
 class Pawn : public Figure
 {
 public:
-	Pawn(FigureColor fc) : Figure(Figures::pawn, fc) {}
+	Pawn(Color fc) : Figure(Figures::pawn, fc)
+	{
+	}
 
 	void firstMoveDone()
 	{
@@ -14,16 +17,12 @@ public:
 
 	MoveSchema getMoveSchema() const override
 	{
-		MoveSchema ms{ Directions::vertical, Length::two, Modifiers::onlyTowardsEnemy };
+		MoveSchema ms{Directions::vertical, Length::two, Modifiers::onlyTowardsEnemy};
 		ms.length = firstMove ? Length::two : Length::one;
 
 		return ms;
 	}
 
-
-
 protected:
-	bool firstMove{ true };
-
+	bool firstMove{true};
 };
-

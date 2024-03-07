@@ -1,21 +1,21 @@
 #pragma once
 
-#include "figure.hpp"
+#include "Figure.hpp"
+#include "Color.hpp"
 
 class Rook : public Figure
 {
 public:
-	Rook(FigureColor fc) : Figure(Figures::rook, fc) {}
+	Rook(Color fc) : Figure(Figures::rook, fc)
+	{
+	}
 
 
 	MoveSchema getMoveSchema() const override
 	{
-		MoveSchema ms{ Directions::horizontalAndVertical, Length::noLimit, Modifiers::none };
-
 		return ms;
 	}
 
 private:
-
+	MoveSchema ms{Directions::horizontalAndVertical, Length::noLimit, Modifiers::none};
 };
-

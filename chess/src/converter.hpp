@@ -2,7 +2,8 @@
 
 #include <map>
 
-struct Position {
+struct Position
+{
 	int x{};
 	int y{};
 
@@ -20,10 +21,9 @@ struct Position {
 class Converter
 {
 public:
-
 	static Position convert(char posX, char posY)
 	{
-		return Position(char_to_int_y.at(posY), char_to_int_x.at(posX));
+		return Position{char_to_int_y.at(posY), char_to_int_x.at(posX)};
 	}
 
 private:
@@ -50,7 +50,6 @@ private:
 		{'7', 6},
 		{'8', 7},
 	};
-
 
 	Position position;
 };

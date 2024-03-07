@@ -1,16 +1,14 @@
 #pragma once
 
 #include <iostream>
-#include "figure.hpp"
+
+#include "Color.hpp"
+#include "Figure.hpp"
 #include "Pawn.hpp"
 
-class Field {
+class Field
+{
 public:
-	enum class Color {
-		white,
-		black
-	};
-
 	Field() = default;
 
 	void setColor(Color c)
@@ -18,65 +16,58 @@ public:
 		fieldColor = c;
 	}
 
-	void setFigure(std::unique_ptr<Figure> fi)
+	void setFigure(std::shared_ptr<Figure> fi)
 	{
 		figure = std::move(fi);
 	}
 
-	Figure::FigureColor getFigureColor()
+	Color getFigureColor() const
 	{
 		return figure->getColor();
 	}
 
-	Figure::Figures getFigureFromField()
+	Figure::Figures getFigureFromField() const
 	{
 		return figure->getFigure();
 	}
 
-	Figure::MoveSchema getFigureSchema()
+	Figure::MoveSchema getFigureSchema() const
 	{
 		return figure->getMoveSchema();
 	}
 
-	bool isEmpty()
+	bool isEmpty() const
 	{
 		return !figure;
 	}
 
-	bool isKing()
+	bool isKing() const
 	{
-		if(!isEmpty() and figure->getFigure() == Figure::Figures::king)
-		{
-			return true;
-		}
-		return false;
+		return !isEmpty() and figure->getFigure() == Figure::Figures::king;
 	}
 
 	void pawnFirstMoveDone()
 	{
 		dynamic_cast<Pawn*>(figure.get())->firstMoveDone();
-
 	}
 
-	bool isPawn()
+	bool isPawn() const
 	{
-		if(!isEmpty() and figure->getFigure()==Figure::Figures::pawn)
-		{
-			return true;
-		}
-		return false;
+		return !isEmpty() and figure->getFigure() == Figure::Figures::pawn;
 	}
 
-	friend std::ostream& operator << (std::ostream& out, const Field& fie) {
-		if (fie.fieldColor == Field::Color::white)
+	friend std::ostream& operator <<(std::ostream& out, const Field& fie)
+	{
+		if (fie.fieldColor == Color::white)
 		{
 			out << "\x1b[0;47m" << ' ';
 			if (fie.figure)
 			{
-				if (fie.figure->getColor() == Figure::FigureColor::white) {
-					out << "\x1b[32m" << *fie.figure << ' ' << "\x1b[0;47m"; 
+				if (fie.figure->getColor() == Color::white)
+				{
+					out << "\x1b[32m" << *fie.figure << ' ' << "\x1b[0;47m";
 				}
-				else if (fie.figure->getColor() == Figure::FigureColor::black)
+				else if (fie.figure->getColor() == Color::black)
 				{
 					out << "\x1b[31m" << *fie.figure << ' ' << "\x1b[0;47m";
 				}
@@ -86,15 +77,16 @@ public:
 				out << ' ' << ' ';
 			}
 		}
-		else if (fie.fieldColor == Field::Color::black)
+		else if (fie.fieldColor == Color::black)
 		{
 			out << "\x1b[0;40m" << ' ';
 			if (fie.figure)
 			{
-				if (fie.figure->getColor() == Figure::FigureColor::white) {
+				if (fie.figure->getColor() == Color::white)
+				{
 					out << "\x1b[32m" << *fie.figure << ' ' << "\x1b[0;40m";
 				}
-				else if (fie.figure->getColor() == Figure::FigureColor::black)
+				else if (fie.figure->getColor() == Color::black)
 				{
 					out << "\x1b[31m" << *fie.figure << ' ' << "\x1b[0;40m";
 				}
@@ -108,17 +100,17 @@ public:
 		return out;
 	}
 
-	std::unique_ptr<Figure> pickFigure()
+	std::shared_ptr<Figure> pickFigure()
 	{
 		return std::move(figure);
 	}
 
-	void placeFigure(std::unique_ptr<Figure> pf)
+	void placeFigure(std::shared_ptr<Figure> pf)
 	{
 		figure = std::move(pf);
 	}
 
 private:
 	Color fieldColor;
-	std::unique_ptr<Figure> figure;
+	std::shared_ptr<Figure> figure;
 };

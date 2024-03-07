@@ -129,25 +129,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="chess.cpp" />
-    <ClCompile Include="src\Bishop.cpp" />
-    <ClCompile Include="src\board.cpp" />
-    <ClCompile Include="src\converter.cpp" />
-    <ClCompile Include="src\field.cpp" />
-    <ClCompile Include="src\figure.cpp" />
-    <ClCompile Include="src\King.cpp" />
-    <ClCompile Include="src\Knight.cpp" />
-    <ClCompile Include="src\Pawn.cpp" />
-    <ClCompile Include="src\Queen.cpp" />
-    <ClCompile Include="src\Rook.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Bishop.hpp" />
-    <ClInclude Include="src\board.hpp" />
-    <ClInclude Include="src\chess.hpp" />
-    <ClInclude Include="src\converter.hpp" />
-    <ClInclude Include="src\field.hpp" />
-    <ClInclude Include="src\figure.hpp" />
+    <ClInclude Include="src\Board.hpp" />
+    <ClInclude Include="src\Chess.hpp" />
+    <ClInclude Include="src\Color.hpp" />
+    <ClInclude Include="src\Converter.hpp" />
+    <ClInclude Include="src\Field.hpp" />
+    <ClInclude Include="src\Figure.hpp" />
     <ClInclude Include="src\King.hpp" />
     <ClInclude Include="src\Knight.hpp" />
     <ClInclude Include="src\Pawn.hpp" />

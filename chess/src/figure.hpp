@@ -3,12 +3,13 @@
 #include <iostream>
 #include <map>
 
-class Figure {
-public:
+#include "Color.hpp"
 
+class Figure
+{
+public:
 	enum class Directions
 	{
-		horizontal,
 		vertical,
 		diagonal,
 		horizontalAndVertical,
@@ -37,10 +38,11 @@ public:
 		Directions direction;
 		Length length;
 		Modifiers modifier;
+	};
 
-	}; MoveSchema moveSchema;
 
-	enum class Figures {
+	enum class Figures
+	{
 		pawn,
 		rook,
 		knight,
@@ -49,7 +51,7 @@ public:
 		king
 	};
 
-	const std::map<Figures, char> Figure_To_Char = {
+	std::map<Figures, char> Figure_To_Char = {
 		{Figures::pawn, 'P'},
 		{Figures::rook, 'R'},
 		{Figures::knight, 'N'},
@@ -58,37 +60,31 @@ public:
 		{Figures::king, 'K'}
 	};
 
-	enum class FigureColor {
-		white,
-		black
-	};
-
-	const std::map<FigureColor, char> FigureColor_to_char = {
-		{FigureColor::white, 'w'},
-		{FigureColor::black, 'b'}
-	};
-
 	Figure() = default;
-	Figure(Figures fn, FigureColor fc) : figureN(fn), figureColor(fc) { }
+	virtual ~Figure() = default;
 
-	void setFigureColor(FigureColor fc)
+	Figure(Figures fn, Color fc) : figureN(fn), figureColor(fc)
+	{
+	}
+
+	void setFigureColor(Color fc)
 	{
 		figureColor = fc;
 	}
 
-	FigureColor	getColor()
+	Color getColor() const
 	{
 		return figureColor;
 	}
 
-	Figures getFigure()
+	Figures getFigure() const
 	{
 		return figureN;
 	}
 
 	virtual MoveSchema getMoveSchema() const = 0;
 
-	friend std::ostream& operator << (std::ostream& out, const Figure& fig)
+	friend std::ostream& operator <<(std::ostream& out, const Figure& fig)
 	{
 		out << fig.Figure_To_Char.at(fig.figureN);
 		return out;
@@ -96,6 +92,5 @@ public:
 
 private:
 	Figures figureN;
-	FigureColor figureColor;
-
+	Color figureColor;
 };

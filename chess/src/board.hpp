@@ -7,74 +7,83 @@
 #include <unordered_map>
 
 #include "Bishop.hpp"
-#include "chess.hpp"
-#include "field.hpp"
-#include "figure.hpp"
+#include "Color.hpp"
+#include "Converter.hpp"
+#include "Field.hpp"
+#include "Figure.hpp"
 #include "King.hpp"
 #include "Knight.hpp"
 #include "Pawn.hpp"
 #include "Queen.hpp"
 #include "Rook.hpp"
 
-class Board {
+using MoveData = std::pair<Position, Position>;
+
+class Board
+{
 public:
-	Board()
+	Board(const Color& turn) : turn{turn}
 	{
-		for (int row{ 0 }; row < 8; ++row) {
-			for (int col{ 0 }; col < 8; ++col) {
+		for (int row{0}; row < 8; ++row)
+		{
+			for (int col{0}; col < 8; ++col)
+			{
 				if (row == 1)
 				{
-					fields[row][col].setFigure(std::make_unique<Pawn>(Figure::FigureColor::black)); //red figure color to distinct it from fields
+					fields[row][col].setFigure(std::make_shared<Pawn>(Color::black));
+					//red figure color to distinct it from fields
 				}
 				if (row == 6)
 				{
-					fields[row][col].setFigure(std::make_unique<Pawn>(Figure::FigureColor::white)); //green
+					fields[row][col].setFigure(std::make_shared<Pawn>(Color::white)); //green
 				}
-				if ((col + row) % 2 == 0) {
-					fields[row][col].setColor(Field::Color::white);
-
+				if ((col + row) % 2 == 0)
+				{
+					fields[row][col].setColor(Color::white);
 				}
-				else {
-					fields[row][col].setColor(Field::Color::black);
+				else
+				{
+					fields[row][col].setColor(Color::black);
 				}
 			}
 		}
 
-		fields[0][0].setFigure(std::make_unique<Rook>(Figure::FigureColor::black));
-		fields[0][7].setFigure(std::make_unique<Rook>(Figure::FigureColor::black));
-		fields[0][1].setFigure(std::make_unique<Knight>(Figure::FigureColor::black));
-		fields[0][6].setFigure(std::make_unique<Knight>(Figure::FigureColor::black));
-		fields[0][2].setFigure(std::make_unique<Bishop>(Figure::FigureColor::black));
-		fields[0][5].setFigure(std::make_unique<Bishop>(Figure::FigureColor::black));
-		fields[0][4].setFigure(std::make_unique<King>(Figure::FigureColor::black));
-		fields[0][3].setFigure(std::make_unique<Queen>(Figure::FigureColor::black));
+		fields[0][0].setFigure(std::make_shared<Rook>(Color::black));
+		fields[0][7].setFigure(std::make_shared<Rook>(Color::black));
+		fields[0][1].setFigure(std::make_shared<Knight>(Color::black));
+		fields[0][6].setFigure(std::make_shared<Knight>(Color::black));
+		fields[0][2].setFigure(std::make_shared<Bishop>(Color::black));
+		fields[0][5].setFigure(std::make_shared<Bishop>(Color::black));
+		fields[0][4].setFigure(std::make_shared<King>(Color::black));
+		fields[0][3].setFigure(std::make_shared<Queen>(Color::black));
 
-		fields[7][0].setFigure(std::make_unique<Rook>(Figure::FigureColor::white));
-		fields[7][7].setFigure(std::make_unique<Rook>(Figure::FigureColor::white));
-		fields[7][1].setFigure(std::make_unique<Knight>(Figure::FigureColor::white));
-		fields[7][6].setFigure(std::make_unique<Knight>(Figure::FigureColor::white));
-		fields[7][2].setFigure(std::make_unique<Bishop>(Figure::FigureColor::white));
-		fields[7][5].setFigure(std::make_unique<Bishop>(Figure::FigureColor::white));
-		fields[7][4].setFigure(std::make_unique<King>(Figure::FigureColor::white));
-		fields[7][3].setFigure(std::make_unique<Queen>(Figure::FigureColor::white));
-
+		fields[7][0].setFigure(std::make_shared<Rook>(Color::white));
+		fields[7][7].setFigure(std::make_shared<Rook>(Color::white));
+		fields[7][1].setFigure(std::make_shared<Knight>(Color::white));
+		fields[7][6].setFigure(std::make_shared<Knight>(Color::white));
+		fields[7][2].setFigure(std::make_shared<Bishop>(Color::white));
+		fields[7][5].setFigure(std::make_shared<Bishop>(Color::white));
+		fields[7][4].setFigure(std::make_shared<King>(Color::white));
+		fields[7][3].setFigure(std::make_shared<Queen>(Color::white));
 	}
 
-	bool canPawnAttack(auto moveData)
+	bool getCheckMate() const
 	{
-		if (checkModifier(moveData) and abs(moveData.first.x - moveData.second.x) == 1 and abs(moveData.first.y - moveData.second.y) == 1 and !fields[moveData.second.x][moveData.second.y].isEmpty())
-		{
-			return true;
-		}
-		return false;
+		return checkMate;
 	}
 
-	bool canPawnMove(auto moveData)
+	bool canPawnAttack(const auto& moveData, const std::array<std::array<Field, 8>, 8>& board)
+	{
+		return checkModifier(moveData, board) and abs(moveData.first.x - moveData.second.x) == 1 and
+			abs(moveData.first.y - moveData.second.y) == 1 and !fields[moveData.second.x][moveData.second.y].isEmpty();
+	}
+
+	bool canPawnMove(const auto& moveData)
 	{
 		auto length = fields[moveData.first.x][moveData.first.y].getFigureSchema().length;
-		int n{ length == Figure::Length::one ? 1 : 2 };
+		int n{length == Figure::Length::one ? 1 : 2};
 
-		for (int i{ 0 }; i < n; ++i)
+		for (int i{0}; i < n; ++i)
 		{
 			if (!fields[moveData.first.x + i][moveData.first.y].isEmpty())
 			{
@@ -84,35 +93,23 @@ public:
 		return true;
 	}
 
-	bool isHorizontal(auto moveData)
+	bool isHorizontal(const auto& moveData)
 	{
-		if (moveData.first.x == moveData.second.x)
-		{
-			return true;
-		}
-		return false;
+		return moveData.first.x == moveData.second.x;
 	}
 
-	bool isVertical(auto moveData)
+	bool isVertical(const auto& moveData)
 	{
-		if (moveData.first.y == moveData.second.y)
-		{
-			return true;
-		}
-		return false;
+		return moveData.first.y == moveData.second.y;
 	}
 
-	bool isDiagonal(auto moveData)
+	bool isDiagonal(const auto& moveData)
 	{
-		if (abs(moveData.first.x - moveData.second.x) == abs(moveData.first.y - moveData.second.y))
-		{
-			return true;
-		}
-		return false;
+		return abs(moveData.first.x - moveData.second.x) == abs(moveData.first.y - moveData.second.y);
 	}
 
-	bool isKnight(auto moveData) {
-
+	bool isKnight(const auto& moveData)
+	{
 		if (moveData.first.x + 2 == moveData.second.x and moveData.first.y + 1 == moveData.second.y)
 		{
 			return true;
@@ -155,19 +152,20 @@ public:
 		return false;
 	}
 
-	bool isPawn(auto moveData)
+	bool isPawn(const auto& moveData, const std::array<std::array<Field, 8>, 8>& board)
 	{
 		if (moveData.first.y == moveData.second.y)
 		{
 			return true;
 		}
-		return canPawnAttack(moveData);
-
+		return canPawnAttack(moveData, board);
 	}
 
-	bool checkDirection(auto moveData)
+	bool checkDirection(const auto& moveData, const std::array<std::array<Field, 8>, 8>& board)
 	{
-		Figure::Directions figureDirection{fields[moveData.first.x][moveData.first.y].getFigureSchema().direction};
+		const Figure::Directions figureDirection{
+			board[moveData.first.x][moveData.first.y].getFigureSchema().direction
+		};
 
 		switch (figureDirection)
 		{
@@ -187,14 +185,14 @@ public:
 			return isKnight(moveData);
 
 		case Figure::Directions::pawn:
-			return isPawn(moveData);
+			return isPawn(moveData, board);
 		}
 		return false;
 	}
 
-	bool checkLength(auto moveData)
+	bool checkLength(const auto& moveData, const std::array<std::array<Field, 8>, 8>& board)
 	{
-		Figure::Length figureLength{fields[moveData.first.x][moveData.first.y].getFigureSchema().length};
+		Figure::Length figureLength{board[moveData.first.x][moveData.first.y].getFigureSchema().length};
 
 		if (figureLength == Figure::Length::noLimit)
 		{
@@ -202,7 +200,8 @@ public:
 		}
 		if (figureLength == Figure::Length::one)
 		{
-			if ((abs(moveData.first.x - moveData.second.x) == 1 and moveData.first.y == moveData.second.y) or (abs(moveData.first.y - moveData.second.y) == 1 and moveData.first.x == moveData.second.x)
+			if ((abs(moveData.first.x - moveData.second.x) == 1 and moveData.first.y == moveData.second.y) or (
+					abs(moveData.first.y - moveData.second.y) == 1 and moveData.first.x == moveData.second.x)
 				or abs(moveData.first.x - moveData.second.x) == 1 and abs(moveData.first.y - moveData.second.y == 1))
 			{
 				return true;
@@ -210,14 +209,15 @@ public:
 		}
 		if (figureLength == Figure::Length::knight)
 		{
-			if ((abs(moveData.first.x - moveData.second.x) == 2 and abs(moveData.first.y - moveData.second.y) == 1) or (abs(moveData.first.y - moveData.second.y) == 2 and abs(moveData.first.x - moveData.second.x) == 1))
+			if ((abs(moveData.first.x - moveData.second.x) == 2 and abs(moveData.first.y - moveData.second.y) == 1) or (
+				abs(moveData.first.y - moveData.second.y) == 2 and abs(moveData.first.x - moveData.second.x) == 1))
 			{
 				return true;
 			}
 		}
 		if (figureLength == Figure::Length::two)
 		{
-			if (abs(moveData.first.x - moveData.second.x) == 2 or abs(moveData.first.x - moveData.second.x)==1)
+			if (abs(moveData.first.x - moveData.second.x) == 2 or abs(moveData.first.x - moveData.second.x) == 1)
 			{
 				return true;
 			}
@@ -225,9 +225,9 @@ public:
 		return false;
 	}
 
-	bool checkModifier(auto moveData)
+	bool checkModifier(const auto& moveData, const std::array<std::array<Field, 8>, 8>& board)
 	{
-		Figure::Modifiers figureModifier{fields[moveData.first.x][moveData.first.y].getFigureSchema().modifier};
+		const Figure::Modifiers figureModifier{board[moveData.first.x][moveData.first.y].getFigureSchema().modifier};
 
 		if (figureModifier == Figure::Modifiers::none)
 		{
@@ -236,11 +236,13 @@ public:
 
 		if (figureModifier == Figure::Modifiers::onlyTowardsEnemy)
 		{
-			if (fields[moveData.first.x][moveData.first.y].getFigureColor() == Figure::FigureColor::white and moveData.first.x > moveData.second.x)
+			if (board[moveData.first.x][moveData.first.y].getFigureColor() == Color::white and moveData.
+				first.x > moveData.second.x)
 			{
 				return true;
 			}
-			if (fields[moveData.first.x][moveData.first.y].getFigureColor() == Figure::FigureColor::black and moveData.first.x < moveData.second.x)
+			if (board[moveData.first.x][moveData.first.y].getFigureColor() == Color::black and moveData.
+				first.x < moveData.second.x)
 			{
 				return true;
 			}
@@ -248,13 +250,13 @@ public:
 
 		if (figureModifier == Figure::Modifiers::king)
 		{
-			auto kings = getKingPosition();
+			auto kings = getKingPosition(board);
 
-			int diffX{ kings.first.x - kings.second.x };
-			int diffY{ kings.first.y - kings.second.y };
+			int diffX{kings.first.x - kings.second.x};
+			int diffY{kings.first.y - kings.second.y};
 
-			int tempX{ diffX < 0 ? -1 : 1 };
-			int tempY{ diffY < 0 ? -1 : 1 };
+			int tempX{diffX < 0 ? -1 : 1};
+			int tempY{diffY < 0 ? -1 : 1};
 
 			if (diffX < tempX and diffY < tempY)
 			{
@@ -268,46 +270,40 @@ public:
 		return false;
 	}
 
-	bool checkIfMovePossible(auto moveData)
+	bool checkIfFigureMoveIsCorrect(const auto& moveData, const std::array<std::array<Field, 8>, 8>& board)
 	{
-		if (checkDirection(moveData) and checkLength(moveData) and checkModifier(moveData))
-		{
-			return true;
-		}
-		return false;
+		return checkDirection(moveData, board) and checkLength(moveData, board) and checkModifier(moveData, board);
 	}
 
-	bool isSubscriptOutOfRange(int x, int y)
+	bool isSubscriptOutOfRange(const int x, const int y)
 	{
-		if (x >= 0 and y >= 0 and x <= 7 and y <= 7)
-		{
-			return false;
-		}
-		return true;
+		return not(x >= 0 and y >= 0 and x <= 7 and y <= 7);
 	}
 
-	bool checkForObstacles(auto ObstacleData)
+	bool checkForObstacles(const MoveData& ObstacleData, const std::array<std::array<Field, 8>, 8>& board)
 	{
-		Figure::Directions figureDirection{fields[ObstacleData.first.x][ObstacleData.first.y].getFigureSchema().direction};
+		const Figure::Directions figureDirection{
+			board[ObstacleData.first.x][ObstacleData.first.y].getFigureSchema().direction
+		};
 
-		int diff{ ObstacleData.first.x - ObstacleData.second.x };
-		int diffY{ ObstacleData.first.y - ObstacleData.second.y };
+		int diff{ObstacleData.first.x - ObstacleData.second.x};
+		int diffY{ObstacleData.first.y - ObstacleData.second.y};
 
-		int modX{ diff < 0 ? 1 : -1 };
+		int modX{diff < 0 ? 1 : -1};
 		int temp = modX;
-		int modY{ diffY < 0 ? 1 : -1 };
+		int modY{diffY < 0 ? 1 : -1};
 		int tempY = modY;
 
-		int n{ diff < 0 ? -diff : diff };
-		int x{ ObstacleData.first.x };
-		int y{ ObstacleData.first.y };
+		int n{diff < 0 ? -diff : diff};
+		int x{ObstacleData.first.x};
+		int y{ObstacleData.first.y};
 
 		switch (figureDirection)
 		{
 		case Figure::Directions::vertical:
-			for (int i{ 0 }; i < n - 1; ++i)
+			for (int i{0}; i < n - 1; ++i)
 			{
-				if (!fields[x + modX][y].isEmpty())
+				if (!board[x + modX][y].isEmpty())
 				{
 					return true;
 				}
@@ -316,13 +312,13 @@ public:
 			return false;
 
 		case Figure::Directions::horizontalAndVertical:
-			for (int i{ 0 }; i < n - 2; ++i)
+			for (int i{0}; i < n - 2; ++i)
 			{
-				if (!fields[x + modX][y].isEmpty())
+				if (!board[x + modX][y].isEmpty())
 				{
 					return true;
 				}
-				if (!fields[x][y + modY].isEmpty())
+				if (!board[x][y + modY].isEmpty())
 				{
 					return true;
 				}
@@ -332,9 +328,9 @@ public:
 			return false;
 
 		case Figure::Directions::diagonal:
-			for (int i{ 0 }; i < n - 2; ++i)
+			for (int i{0}; i < n - 2; ++i)
 			{
-				if (!fields[x + modX][y + modY].isEmpty())
+				if (!board[x + modX][y + modY].isEmpty())
 				{
 					return true;
 				}
@@ -344,9 +340,10 @@ public:
 			return false;
 
 		case Figure::Directions::all:
-			for (int i{ 0 }; i < n - 2; ++i)
+			for (int i{0}; i < n - 2; ++i)
 			{
-				if (!fields[x + modX][y].isEmpty() or !fields[x][y + modY].isEmpty() or !fields[x + modX][y + modY].isEmpty())
+				if (!board[x + modX][y].isEmpty() or !board[x][y + modY].isEmpty() or !board[x + modX][y + modY].
+					isEmpty())
 				{
 					return true;
 				}
@@ -356,11 +353,10 @@ public:
 
 		case Figure::Directions::pawn:
 			return canPawnMove(ObstacleData);
-
 		case Figure::Directions::knight:
+		default:
 			return false;
 		}
-
 	}
 
 	int promoteFigureChoice()
@@ -377,10 +373,10 @@ public:
 		return figureChoice;
 	}
 
-	void promote(auto moveData)
+	void promote(const auto& moveData)
 	{
 		auto color = fields[moveData.second.x][moveData.second.y].getFigureColor();
-		int figureChoice = promoteFigureChoice();
+		const int figureChoice = promoteFigureChoice();
 
 		while (figureChoice < 1 or figureChoice > 4)
 		{
@@ -391,66 +387,74 @@ public:
 		switch (figureChoice)
 		{
 		case 1:
-			fields[moveData.second.x][moveData.second.y].setFigure(std::make_unique<Queen>(color));
+			fields[moveData.second.x][moveData.second.y].setFigure(std::make_shared<Queen>(color));
+			break;
 		case 2:
-			fields[moveData.second.x][moveData.second.y].setFigure(std::make_unique<Knight>(color));
+			fields[moveData.second.x][moveData.second.y].setFigure(std::make_shared<Knight>(color));
+			break;
 		case 3:
-			fields[moveData.second.x][moveData.second.y].setFigure(std::make_unique<Bishop>(color));
+			fields[moveData.second.x][moveData.second.y].setFigure(std::make_shared<Bishop>(color));
+			break;
 		case 4:
-			fields[moveData.second.x][moveData.second.y].setFigure(std::make_unique<Rook>(color));
-
+			fields[moveData.second.x][moveData.second.y].setFigure(std::make_shared<Rook>(color));
+			break;
+		default:
+			break;
 		}
 	}
 
-	std::pair<Position, Position> getKingPosition()
+	std::pair<Position, Position> getKingPosition(const std::array<std::array<Field, 8>, 8>& board)
 	{
 		Position whiteKing{};
 		Position blackKing{};
 
-		for (int x{ 0 }; x < 8; ++x)
+		for (int x{0}; x < 8; ++x)
 		{
-			for (int y{ 0 }; y < 8; ++y)
+			for (int y{0}; y < 8; ++y)
 			{
-				if (fields[x][y].isKing() and fields[x][y].getFigureColor() == Figure::FigureColor::white)
+				if (board[x][y].isKing() and board[x][y].getFigureColor() == Color::white)
 				{
-					whiteKing = Position{ x,y };
+					whiteKing = Position{x, y};
 				}
-				else if (fields[x][y].isKing() and fields[x][y].getFigureColor() == Figure::FigureColor::black)
+				else if (board[x][y].isKing() and board[x][y].getFigureColor() == Color::black)
 				{
-					blackKing = Position{ x,y };
+					blackKing = Position{x, y};
 				}
 			}
 		}
 		return std::make_pair(whiteKing, blackKing);
 	}
 
-	bool isKingOnPath(int x, int y)
+	bool isKingOnPath(const int x, const int y, const std::array<std::array<Field, 8>, 8>& board)
 	{
+		const Figure::Directions figureDirection{board[x][y].getFigureSchema().direction};
+		const auto kings = getKingPosition(board);
 
-		Figure::Directions figureDirection{fields[x][y].getFigureSchema().direction};
-		auto kings = getKingPosition();
+		const Position& enemyKingPosition = board[x][y].getFigureColor() == Color::white
+			                                    ? kings.second
+			                                    : kings.first;
 
-		const Position& enemyKingPosition = fields[x][y].getFigureColor() == Figure::FigureColor::white ? kings.second : kings.first;
+		Position fieldData = Position{x, y};
+		const std::pair<Position, Position> obstacleData = std::make_pair(fieldData, enemyKingPosition);
 
-		Position fieldData = Position{ x,y };
-		std::pair<Position, Position> obstacleData = std::make_pair(fieldData, enemyKingPosition);
+		int diff{x - enemyKingPosition.x};
+		int diffY{y - enemyKingPosition.y};
 
-		int diff{ x - enemyKingPosition.x };
-		int diffY{ y - enemyKingPosition.y };
-
-		int modX{ diff < 0 ? 1 : -1 };
+		int modX{diff < 0 ? 1 : -1};
 		int temp = modX;
-		int modY{ diffY < 0 ? 1 : -1 };
+		int modY{diffY < 0 ? 1 : -1};
 		int tempY = modY;
 
-		int n{ diff < 0 ? -diff : diff };
+		int n{diff < 0 ? -diff : diff};
 
 		switch (figureDirection)
 		{
 		case Figure::Directions::vertical:
-			for (int i{ 0 }; i < 1; ++i)
+			for (int i{0}; i < 1; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY) and fields[x + modX][y].isKing() and fields[x][y].getFigureColor() != fields[x + modX][y].getFigureColor())
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY) and board[x +
+						modX]
+					[y].isKing() and board[x][y].getFigureColor() != board[x + modX][y].getFigureColor())
 				{
 					return true;
 				}
@@ -460,31 +464,33 @@ public:
 
 
 		case Figure::Directions::horizontalAndVertical:
-			for (int i{ 0 }; i < n; ++i)
+			for (int i{0}; i < n; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY))
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY))
 				{
-
-					if (fields[x + modX][y].isKing() and fields[x][y].getFigureColor() != fields[x + modX][y].getFigureColor()) 
+					if (board[x + modX][y].isKing() and board[x][y].getFigureColor() != board[x + modX][y].
+						getFigureColor())
 					{
 						return true;
 					}
-					if (fields[x][y + modY].isKing() and fields[x][y].getFigureColor() != fields[x][y + modY].getFigureColor())
+					if (board[x][y + modY].isKing() and board[x][y].getFigureColor() != board[x][y + modY].
+						getFigureColor())
 					{
 						return true;
 					}
-
 				}
 				modX += temp;
 				modY += tempY;
-
 			}
 			return false;
 
 		case Figure::Directions::diagonal:
-			for (int i{ 0 }; i < n; ++i)
+			for (int i{0}; i < n; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY) and fields[x + modX][y + modY].isKing() and fields[x][y].getFigureColor() != fields[x + modX][y + modY].getFigureColor())
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY) and board[x +
+						modX]
+					[y + modY].isKing() and board[x][y].getFigureColor() != board[x + modX][y + modY].
+					getFigureColor())
 				{
 					return true;
 				}
@@ -494,20 +500,22 @@ public:
 			return false;
 
 		case Figure::Directions::all:
-			for (int i{ 0 }; i < n; ++i)
+			for (int i{0}; i < n; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY))
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY))
 				{
-
-					if (fields[x + modX][y].isKing() and fields[x][y].getFigureColor() != fields[x + modX][y].getFigureColor())
+					if (board[x + modX][y].isKing() and board[x][y].getFigureColor() != board[x + modX][y].
+						getFigureColor())
 					{
 						return true;
 					}
-					if (fields[x][y + modY].isKing() and fields[x][y].getFigureColor() != fields[x][y + modY].getFigureColor())
+					if (board[x][y + modY].isKing() and board[x][y].getFigureColor() != board[x][y + modY].
+						getFigureColor())
 					{
 						return true;
 					}
-					if (fields[x + modX][y + modY].isKing() and fields[x][y].getFigureColor() != fields[x + modX][y + modY].getFigureColor())
+					if (board[x + modX][y + modY].isKing() and board[x][y].getFigureColor() != board[x + modX][y +
+						modY].getFigureColor())
 					{
 						return true;
 					}
@@ -519,72 +527,73 @@ public:
 
 		case Figure::Directions::knight:
 
-			if (x + 1 <= 7 and y + 2 <= 7 and fields[x + 1][y + 2].isKing() and fields[x][y].getFigureColor() != fields[x + 1][y + 2].getFigureColor())
+			if (x + 1 <= 7 and y + 2 <= 7 and board[x + 1][y + 2].isKing() and board[x][y].getFigureColor() != board[
+				x + 1][y + 2].getFigureColor())
 			{
 				return true;
 			}
 
-			if (x + 1 <= 7 and y - 2 >= 0 and fields[x + 1][y - 2].isKing() and fields[x][y].getFigureColor() != fields[x + 1][y - 2].getFigureColor())
+			if (x + 1 <= 7 and y - 2 >= 0 and board[x + 1][y - 2].isKing() and board[x][y].getFigureColor() != board[
+				x + 1][y - 2].getFigureColor())
 			{
 				return true;
 			}
 
-			if (x - 1 >= 0 and y + 2 <= 7 and fields[x - 1][y + 2].isKing() and fields[x][y].getFigureColor() != fields[x - 1][y + 2].getFigureColor())
+			if (x - 1 >= 0 and y + 2 <= 7 and board[x - 1][y + 2].isKing() and board[x][y].getFigureColor() != board[
+				x - 1][y + 2].getFigureColor())
 			{
 				return true;
 			}
 
-			if (x - 1 >= 0 and y - 2 >= 0 and fields[x - 1][y - 2].isKing() and fields[x][y].getFigureColor() != fields[x - 1][y - 2].getFigureColor())
+			if (x - 1 >= 0 and y - 2 >= 0 and board[x - 1][y - 2].isKing() and board[x][y].getFigureColor() != board[
+				x - 1][y - 2].getFigureColor())
 			{
 				return true;
 			}
 
-			if (x + 2 <= 7 and y - 1 >= 0 and fields[x + 2][y - 1].isKing() and fields[x][y].getFigureColor() != fields[x + 2][y - 1].getFigureColor())
+			if (x + 2 <= 7 and y - 1 >= 0 and board[x + 2][y - 1].isKing() and board[x][y].getFigureColor() != board[
+				x + 2][y - 1].getFigureColor())
 			{
 				return true;
 			}
 
-			if (x - 2 >= 0 and y + 1 <= 7 and fields[x - 2][y + 1].isKing() and fields[x][y].getFigureColor() != fields[x - 2][y + 1].getFigureColor())
+			if (x - 2 >= 0 and y + 1 <= 7 and board[x - 2][y + 1].isKing() and board[x][y].getFigureColor() != board[
+				x - 2][y + 1].getFigureColor())
 			{
 				return true;
 			}
 
-			if (x - 2 >= 0 and y - 1 >= 0 and fields[x - 2][y - 1].isKing() and fields[x][y].getFigureColor() != fields[x - 2][y - 1].getFigureColor())
+			if (x - 2 >= 0 and y - 1 >= 0 and board[x - 2][y - 1].isKing() and board[x][y].getFigureColor() != board[
+				x - 2][y - 1].getFigureColor())
 			{
 				return true;
 			}
 
-			if (x + 2 <= 7 and y + 1 <= 7 and fields[x + 2][y + 1].isKing() and fields[x][y].getFigureColor() != fields[x + 2][y + 1].getFigureColor())
+			if (x + 2 <= 7 and y + 1 <= 7 and board[x + 2][y + 1].isKing() and board[x][y].getFigureColor() != board[
+				x + 2][y + 1].getFigureColor())
 			{
 				return true;
 			}
 			return false;
+		default:
+			return false;
 		}
 	}
 
-	bool checkCheck()
+	bool checkCheck(const std::array<std::array<Field, 8>, 8>& board)
 	{
-		for (int x{ 0 }; x < 8; ++x)
+		for (int x{0}; x < 8; ++x)
 		{
-			for (int y{ 0 }; y < 8; ++y)
+			for (int y{0}; y < 8; ++y)
 			{
-				if (!fields[x][y].isEmpty())
+				if (!board[x][y].isEmpty())
 				{
-					if (Chess::getTurn() and fields[x][y].getFigureColor() == Figure::FigureColor::black)
+					if (turn != board[x][y].getFigureColor())
 					{
-						if (isKingOnPath(x, y))
+						if (isKingOnPath(x, y, board))
 						{
 							std::cout << "check" << x << ' ' << y;
-							checkingFigure = { x,y };
-							return true;
-						}
-					}
-					if (!Chess::getTurn() and fields[x][y].getFigureColor() == Figure::FigureColor::white)
-					{
-						if (isKingOnPath(x, y))
-						{
-							std::cout << "check" << x << ' ' << y;
-							checkingFigure = { x,y };
+							checkingFigure = {x, y};
 							return true;
 						}
 					}
@@ -592,224 +601,247 @@ public:
 			}
 		}
 		return false;
-
 	}
 
-	void checkFieldsNearKing(int x, int y, std::map<Position, bool> kingMoveMap)
+	void checkFieldsNearKing(const int x, const int y, std::map<Position, bool> kingMoveMap,
+	                         const std::array<std::array<Field, 8>, 8>& board)
 	{
-		Figure::Directions figureDirection{fields[x][y].getFigureSchema().direction};
-		auto kings = getKingPosition();
+		const Figure::Directions figureDirection{board[x][y].getFigureSchema().direction};
+		const auto kings = getKingPosition(board);
 
-		const Position& enemyKingPosition = fields[x][y].getFigureColor() == Figure::FigureColor::white ? kings.second : kings.first;
+		const Position& enemyKingPosition = board[x][y].getFigureColor() == Color::white
+			                                    ? kings.second
+			                                    : kings.first;
 
-		Position fieldData = Position{ x,y };
-		std::pair<Position, Position> obstacleData = std::make_pair(fieldData, enemyKingPosition);
+		Position fieldData = Position{x, y};
+		const std::pair<Position, Position> obstacleData = std::make_pair(fieldData, enemyKingPosition);
 
 		for (int i : {-1, 0, 1})
 		{
-			for (int j : {-1, 0, 1}) {
-				if (!isSubscriptOutOfRange(enemyKingPosition.x + i, enemyKingPosition.y + j)) {
+			for (int j : {-1, 0, 1})
+			{
+				if (!isSubscriptOutOfRange(enemyKingPosition.x + i, enemyKingPosition.y + j))
+				{
 					if ((i == -1 or i == 1) and j == 0)
 					{
-						if (fields[enemyKingPosition.x + i][enemyKingPosition.y + j].isEmpty()) {
-							kingMoveMap[Position(enemyKingPosition.x + i, enemyKingPosition.y)] = true;
+						if (board[enemyKingPosition.x + i][enemyKingPosition.y + j].isEmpty())
+						{
+							kingMoveMap[Position{enemyKingPosition.x + i, enemyKingPosition.y}] = true;
 						}
 						else
 						{
-							kingMoveMap[Position(enemyKingPosition.x + i, enemyKingPosition.y)] = false;
+							kingMoveMap[Position{enemyKingPosition.x + i, enemyKingPosition.y}] = false;
 						}
 					}
 					if (i == 0 and (j == -1 or j == 1))
 					{
-						if (fields[enemyKingPosition.x + i][enemyKingPosition.y + j].isEmpty()) {
-							kingMoveMap[Position(enemyKingPosition.x, enemyKingPosition.y + j)] = true;
+						if (board[enemyKingPosition.x + i][enemyKingPosition.y + j].isEmpty())
+						{
+							kingMoveMap[Position{enemyKingPosition.x, enemyKingPosition.y + j}] = true;
 						}
 						else
 						{
-							kingMoveMap[Position(enemyKingPosition.x, enemyKingPosition.y + j)] = false;
+							kingMoveMap[Position{enemyKingPosition.x, enemyKingPosition.y + j}] = false;
 						}
 					}
-					if (fields[enemyKingPosition.x + i][enemyKingPosition.y + j].isEmpty() and i != 0 and j != 0) {
-						kingMoveMap[Position(enemyKingPosition.x + i, enemyKingPosition.y + j)] = true;
+					if (board[enemyKingPosition.x + i][enemyKingPosition.y + j].isEmpty() and i != 0 and j != 0)
+					{
+						kingMoveMap[Position{enemyKingPosition.x + i, enemyKingPosition.y + j}] = true;
 					}
 					else
 					{
-						kingMoveMap[Position(enemyKingPosition.x + i, enemyKingPosition.y + j)] = false;
+						kingMoveMap[Position{enemyKingPosition.x + i, enemyKingPosition.y + j}] = false;
 					}
 				}
 			}
 		}
 
-		int diffX{ x - enemyKingPosition.x };
-		int diffY{ y - enemyKingPosition.y };
+		int diffX{x - enemyKingPosition.x};
+		int diffY{y - enemyKingPosition.y};
 
-		int modX{ diffX < 0 ? 1 : -1 };
+		int modX{diffX < 0 ? 1 : -1};
 		int tempX = modX;
-		int modY{ diffY < 0 ? 1 : -1 };
+		int modY{diffY < 0 ? 1 : -1};
 		int tempY = modY;
 
-		int n{ diffX < 0 ? -diffX : diffX };
+		int n{diffX < 0 ? -diffX : diffX};
 
 		switch (figureDirection)
 		{
 		case Figure::Directions::vertical:
-			for (int i{ 0 }; i < 1; ++i)
+			for (int i{0}; i < 1; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y) and kingMoveMap.contains(Position(x + modX, y)))
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y) and kingMoveMap.
+					contains(
+						Position{x + modX, y}))
 				{
-					kingMoveMap[Position(x + modX, y)] = false;
+					kingMoveMap[Position{x + modX, y}] = false;
 				}
 				modX += tempX;
 			}
+			break;
 
 
 		case Figure::Directions::horizontalAndVertical:
-			for (int i{ 0 }; i < n; ++i)
+			for (int i{0}; i < n; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY))
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY))
 				{
-					if (kingMoveMap.contains(Position(x + modX, y)))
+					if (kingMoveMap.contains(Position{x + modX, y}))
 					{
-						kingMoveMap[Position(x + modX, y)] = false;
+						kingMoveMap[Position{x + modX, y}] = false;
 					}
-					if (kingMoveMap.contains(Position(x, y + modY)))
+					if (kingMoveMap.contains(Position{x, y + modY}))
 					{
-						kingMoveMap[Position(x, y + modY)] = false;
+						kingMoveMap[Position{x, y + modY}] = false;
 					}
 				}
 				modX += tempX;
 				modY += tempY;
-
 			}
+			break;
 
 		case Figure::Directions::diagonal:
-			for (int i{ 0 }; i < n; ++i)
+			for (int i{0}; i < n; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY) and kingMoveMap.contains(Position(x + modX, y + modY))) {}
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY) and
+					kingMoveMap.
+					contains(Position{x + modX, y + modY}))
 				{
-					kingMoveMap[Position(x + modX, y + modY)] = false;
+					kingMoveMap[Position{x + modX, y + modY}] = false;
 				}
 
 				modX += tempX;
 				modY += tempY;
 			}
+			break;
 
 		case Figure::Directions::all:
-			for (int i{ 0 }; i < n; ++i)
+			for (int i{0}; i < n; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY) and kingMoveMap.contains(Position(x + modX, y)))
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY) and
+					kingMoveMap.
+					contains(Position{x + modX, y}))
 				{
-					kingMoveMap[Position(x + modX, y)] = false;
+					kingMoveMap[Position{x + modX, y}] = false;
 				}
 
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY) and kingMoveMap.contains(Position(x, y + modY)))
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY) and
+					kingMoveMap.
+					contains(Position{x, y + modY}))
 				{
-					kingMoveMap[Position(x, y + modY)] = false;
-
+					kingMoveMap[Position{x, y + modY}] = false;
 				}
 
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY) and kingMoveMap.contains(Position(x + modX, y + modY)))
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY) and
+					kingMoveMap.
+					contains(Position{x + modX, y + modY}))
 				{
-					kingMoveMap[Position(x + modX, y + modY)] = false;
-
+					kingMoveMap[Position{x + modX, y + modY}] = false;
 				}
 
 				modX += tempX;
 				modY += tempY;
 			}
+			break;
 
 		case Figure::Directions::knight:
-				if (x+2<=7 and y+1<=7 and kingMoveMap.contains(Position(x + 2, y + 1)))
-				{
-					kingMoveMap[Position(x + 2, y + 1)] = false;
-				}
+			if (x + 2 <= 7 and y + 1 <= 7 and kingMoveMap.contains(Position{x + 2, y + 1}))
+			{
+				kingMoveMap[Position{x + 2, y + 1}] = false;
+			}
 
-				if (x + 2 <= 7 and y - 1 >= 0 and kingMoveMap.contains(Position(x + 2, y - 1)))
-				{
-					kingMoveMap[Position(x + 2, y - 1)] = false;
-				}
+			if (x + 2 <= 7 and y - 1 >= 0 and kingMoveMap.contains(Position{x + 2, y - 1}))
+			{
+				kingMoveMap[Position{x + 2, y - 1}] = false;
+			}
 
-				if (x - 2 >=0 and y + 1 <= 7 and kingMoveMap.contains(Position(x - 2, y + 1)))
-				{
-					kingMoveMap[Position(x - 2, y + 1)] = false;
-				}
+			if (x - 2 >= 0 and y + 1 <= 7 and kingMoveMap.contains(Position{x - 2, y + 1}))
+			{
+				kingMoveMap[Position{x - 2, y + 1}] = false;
+			}
 
-				if (x - 2 >= 0 and y - 1 >=0 and kingMoveMap.contains(Position(x - 2, y - 1)))
-				{
-					kingMoveMap[Position(x - 2, y - 1)] = false;
-				}
+			if (x - 2 >= 0 and y - 1 >= 0 and kingMoveMap.contains(Position{x - 2, y - 1}))
+			{
+				kingMoveMap[Position{x - 2, y - 1}] = false;
+			}
 
-				if (x + 1 <= 7 and y + 2 <= 7 and kingMoveMap.contains(Position(x + 1, y + 2)))
-				{
-					kingMoveMap[Position(x + 1, y + 2)] = false;
-				}
+			if (x + 1 <= 7 and y + 2 <= 7 and kingMoveMap.contains(Position{x + 1, y + 2}))
+			{
+				kingMoveMap[Position{x + 1, y + 2}] = false;
+			}
 
-				if (x + 1 <= 7 and y - 2 >=0 and  kingMoveMap.contains(Position(x + 1, y - 2)))
-				{
-					kingMoveMap[Position(x + 1, y - 2)] = false;
-				}
+			if (x + 1 <= 7 and y - 2 >= 0 and kingMoveMap.contains(Position{x + 1, y - 2}))
+			{
+				kingMoveMap[Position{x + 1, y - 2}] = false;
+			}
 
-				if (x - 1 >= 0 and y + 2 <= 7 and kingMoveMap.contains(Position(x - 1, y + 2)))
-				{
-					kingMoveMap[Position(x - 1, y + 2)] = false;
-				}
+			if (x - 1 >= 0 and y + 2 <= 7 and kingMoveMap.contains(Position{x - 1, y + 2}))
+			{
+				kingMoveMap[Position{x - 1, y + 2}] = false;
+			}
 
-				if (x - 1 >= 0 and y - 2 >= 0 and kingMoveMap.contains(Position(x - 1, y - 2)))
-				{
-					kingMoveMap[Position(x - 1, y - 2)] = false;
-				}
+			if (x - 1 >= 0 and y - 2 >= 0 and kingMoveMap.contains(Position{x - 1, y - 2}))
+			{
+				kingMoveMap[Position{x - 1, y - 2}] = false;
+			}
+			break;
+		case Figure::Directions::pawn:
+			if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY) and
+				kingMoveMap.
+				contains(Position{x + modX, y + modY}))
+			{
+				kingMoveMap[Position{x + modX, y + modY}] = false;
+			}
+			break;
 		}
 	}
 
-	bool canKingMove()
+	bool canKingMove(const std::array<std::array<Field, 8>, 8>& board)
 	{
-		std::map <Position, bool>  kingMoveMap = { };
+		std::map<Position, bool> kingMoveMap = {};
 
-		for (int x{ 0 }; x < 8; ++x)
+		for (int x{0}; x < 8; ++x)
 		{
-			for (int y{ 0 }; y < 8; ++y)
+			for (int y{0}; y < 8; ++y)
 			{
-				if (!fields[x][y].isEmpty())
+				if (!board[x][y].isEmpty())
 				{
-					if (Chess::getTurn() and fields[x][y].getFigureColor() == Figure::FigureColor::black)
+					if (turn != board[x][y].getFigureColor())
 					{
-						checkFieldsNearKing(x, y, kingMoveMap);
-					}
-					if (!Chess::getTurn() and fields[x][y].getFigureColor() == Figure::FigureColor::white)
-					{
-						checkFieldsNearKing(x, y, kingMoveMap);
+						checkFieldsNearKing(x, y, kingMoveMap, board);
 					}
 				}
 			}
 		}
 
-		return std::any_of(kingMoveMap.begin(), kingMoveMap.end(), [](const auto& it) { return it.second; });
-
+		return std::ranges::any_of(kingMoveMap, [](const auto& it) { return it.second; });
 	}
 
-	bool isCheckingFigureOnPathOf(int x, int y)
+	bool isCheckingFigureOnPathOf(const int x, const int y, const std::array<std::array<Field, 8>, 8>& board)
 	{
-		Figure::Directions figureDirection{fields[x][y].getFigureSchema().direction};
+		const Figure::Directions figureDirection{board[x][y].getFigureSchema().direction};
 
-		Position fieldData = Position{ x,y };
-		std::pair<Position, Position> obstacleData = std::make_pair(fieldData, checkingFigure);
+		Position fieldData = Position{x, y};
+		const std::pair<Position, Position> obstacleData = std::make_pair(fieldData, checkingFigure);
 
-		int diff{ x - checkingFigure.x };
-		int diffY{ y - checkingFigure.y };
+		int diff{x - checkingFigure.x};
+		int diffY{y - checkingFigure.y};
 
-		int modX{ diff < 0 ? 1 : -1 };
+		int modX{diff < 0 ? 1 : -1};
 		int temp = modX;
-		int modY{ diffY < 0 ? 1 : -1 };
+		int modY{diffY < 0 ? 1 : -1};
 		int tempY = modY;
 
-		int n{ diff < 0 ? -diff : diff };
+		int n{diff < 0 ? -diff : diff};
 
 		switch (figureDirection)
 		{
 		case Figure::Directions::vertical:
-			for (int i{ 0 }; i < 1; ++i)
+			for (int i{0}; i < 1; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y) and x + modX == checkingFigure.x and y == checkingFigure.y)
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y) and x + modX ==
+					checkingFigure.x and y == checkingFigure.y)
 				{
 					return true;
 				}
@@ -819,9 +851,9 @@ public:
 
 
 		case Figure::Directions::horizontalAndVertical:
-			for (int i{ 0 }; i < n; ++i)
+			for (int i{0}; i < n; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY))
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY))
 				{
 					if (x + modX == checkingFigure.x and y == checkingFigure.y)
 					{
@@ -834,14 +866,15 @@ public:
 				}
 				modX += temp;
 				modY += tempY;
-
 			}
 			return false;
 
 		case Figure::Directions::diagonal:
-			for (int i{ 0 }; i < n; ++i)
+			for (int i{0}; i < n; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY) and x + modX == checkingFigure.x and x + modY == checkingFigure.y)
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY) and x + modX
+					==
+					checkingFigure.x and x + modY == checkingFigure.y)
 				{
 					return true;
 				}
@@ -851,9 +884,9 @@ public:
 			return false;
 
 		case Figure::Directions::all:
-			for (int i{ 0 }; i < n; ++i)
+			for (int i{0}; i < n; ++i)
 			{
-				if (!checkForObstacles(obstacleData) and !isSubscriptOutOfRange(x + modX, y + modY))
+				if (!checkForObstacles(obstacleData, board) and !isSubscriptOutOfRange(x + modX, y + modY))
 				{
 					if (x + modX == checkingFigure.x and y == checkingFigure.y)
 					{
@@ -874,7 +907,8 @@ public:
 			return false;
 
 		case Figure::Directions::knight:
-			if (!isSubscriptOutOfRange(x + 2, y + 2) or !isSubscriptOutOfRange(x + 2, y - 2) or !isSubscriptOutOfRange(x - 2, y + 2) or !isSubscriptOutOfRange(x - 2, y - 2))
+			if (!isSubscriptOutOfRange(x + 2, y + 2) or !isSubscriptOutOfRange(x + 2, y - 2) or !
+				isSubscriptOutOfRange(x - 2, y + 2) or !isSubscriptOutOfRange(x - 2, y - 2))
 			{
 				if (x + 2 == checkingFigure.x and y + 1 == checkingFigure.y)
 				{
@@ -908,26 +942,25 @@ public:
 				{
 					return true;
 				}
-
 			}
+			return false;
+		case Figure::Directions::pawn:
+		default:
 			return false;
 		}
 	}
 
-	bool canKillCheckingFigure()
+	bool canKillCheckingFigure(const std::array<std::array<Field, 8>, 8>& board)
 	{
-		for (int x{ 0 }; x < 8; ++x)
+		for (int x{0}; x < 8; ++x)
 		{
-			for (int y{ 0 }; y < 8; ++y)
+			for (int y{0}; y < 8; ++y)
 			{
-				if (!fields[x][y].isEmpty()) {
-					if (Chess::getTurn() and fields[x][y].getFigureColor() == Figure::FigureColor::white)
+				if (!board[x][y].isEmpty())
+				{
+					if (turn == board[x][y].getFigureColor())
 					{
-						return isCheckingFigureOnPathOf(x, y);
-					}
-					if (!Chess::getTurn() and fields[x][y].getFigureColor() == Figure::FigureColor::black)
-					{
-						return isCheckingFigureOnPathOf(x, y);
+						return isCheckingFigureOnPathOf(x, y, board);
 					}
 				}
 			}
@@ -935,32 +968,35 @@ public:
 		return false;
 	}
 
-	std::vector<Position> getCheckingFigurePath(Position checkingFig)
+	std::vector<Position> getCheckingFigurePath(Position checkingFig, const std::array<std::array<Field, 8>, 8>& board)
 	{
 		std::vector<Position> checkingFigurePath;
-		Figure::Directions figureDirection{fields[checkingFig.x][checkingFig.y].getFigureSchema().direction};
+		const Figure::Directions figureDirection{board[checkingFig.x][checkingFig.y].getFigureSchema().direction};
 
-		auto kings = getKingPosition();
-		const Position& enemyKingPosition = fields[checkingFig.x][checkingFig.y].getFigureColor() == Figure::FigureColor::white ? kings.second : kings.first;
+		const auto kings = getKingPosition(board);
+		const Position& enemyKingPosition = board[checkingFig.x][checkingFig.y].getFigureColor() ==
+		                                    Color::white
+			                                    ? kings.second
+			                                    : kings.first;
 
-		int diff{ checkingFig.x - enemyKingPosition.x };
-		int diffY{ checkingFig.y - enemyKingPosition.y };
+		int diff{checkingFig.x - enemyKingPosition.x};
+		int diffY{checkingFig.y - enemyKingPosition.y};
 
-		int modX{ diff < 0 ? 1 : -1 };
+		int modX{diff < 0 ? 1 : -1};
 		int temp = modX;
-		int modY{ diffY < 0 ? 1 : -1 };
+		int modY{diffY < 0 ? 1 : -1};
 		int tempY = modY;
 
-		int n{ diff < 0 ? -diff : diff };
+		int n{diff < 0 ? -diff : diff};
 
 		switch (figureDirection)
 		{
 		case Figure::Directions::vertical:
-			for (int i{ 0 }; i < n - 1; ++i)
+			for (int i{0}; i < n - 1; ++i)
 			{
 				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modX))
 				{
-					checkingFigurePath.emplace_back(Position(checkingFig.x + modX, checkingFig.y));
+					checkingFigurePath.emplace_back(Position{checkingFig.x + modX, checkingFig.y});
 				}
 				modX += temp;
 			}
@@ -968,35 +1004,30 @@ public:
 
 
 		case Figure::Directions::horizontalAndVertical:
-			for (int i{ 0 }; i < n - 1; ++i)
+			for (int i{0}; i < n - 1; ++i)
 			{
-
 				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modY))
 				{
 					if (diffY == 0)
 					{
-						checkingFigurePath.emplace_back(Position(checkingFig.x + modX, checkingFig.y));
+						checkingFigurePath.emplace_back(Position{checkingFig.x + modX, checkingFig.y});
 					}
 					if (diff == 0)
 					{
-						checkingFigurePath.emplace_back(Position(checkingFig.x, checkingFig.y + modY));
-
+						checkingFigurePath.emplace_back(Position{checkingFig.x, checkingFig.y + modY});
 					}
 				}
 				modX += temp;
 				modY += tempY;
-
 			}
 			return checkingFigurePath;
 
 		case Figure::Directions::diagonal:
-			for (int i{ 0 }; i < n - 1; ++i)
+			for (int i{0}; i < n - 1; ++i)
 			{
-
 				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modY))
 				{
-					checkingFigurePath.emplace_back(Position(checkingFig.x + modX, checkingFig.y + modY));
-
+					checkingFigurePath.emplace_back(Position{checkingFig.x + modX, checkingFig.y + modY});
 				}
 				modX += temp;
 				modY += tempY;
@@ -1004,23 +1035,21 @@ public:
 			return checkingFigurePath;
 
 		case Figure::Directions::all:
-			for (int i{ 0 }; i < n - 1; ++i)
+			for (int i{0}; i < n - 1; ++i)
 			{
 				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modY))
 				{
 					if (diffY == 0)
 					{
-						checkingFigurePath.emplace_back(Position(checkingFig.x + modX, checkingFig.y));
+						checkingFigurePath.emplace_back(Position{checkingFig.x + modX, checkingFig.y});
 					}
 					if (diff == 0)
 					{
-						checkingFigurePath.emplace_back(Position(checkingFig.x, checkingFig.y + modY));
-
+						checkingFigurePath.emplace_back(Position{checkingFig.x, checkingFig.y + modY});
 					}
 					if (diff == diffY)
 					{
-						checkingFigurePath.emplace_back(Position(checkingFig.x + modX, checkingFig.y + modY));
-
+						checkingFigurePath.emplace_back(Position{checkingFig.x + modX, checkingFig.y + modY});
 					}
 				}
 				modX += temp;
@@ -1029,38 +1058,42 @@ public:
 			return checkingFigurePath;
 
 		case Figure::Directions::knight:
-
+		case Figure::Directions::pawn:
+		default:
 			return checkingFigurePath;
 		}
 	}
 
-	bool canBlockPathOfCheckingFigure(int x, int y, Position checkingFig)
+	bool canBlockPathOfCheckingFigure(const int x, const int y, Position checkingFig,
+	                                  const std::array<std::array<Field, 8>, 8>& board)
 	{
-		std::vector<Position> checkingFigurePath = getCheckingFigurePath(checkingFig);
-		Figure::Directions figureDirection{fields[x][y].getFigureSchema().direction};
+		const std::vector<Position> checkingFigurePath = getCheckingFigurePath(checkingFig, board);
+		const Figure::Directions figureDirection{board[x][y].getFigureSchema().direction};
 
 
-		int diffX{ x - checkingFig.x };
-		int diffY{ y - checkingFig.y };
+		int diffX{x - checkingFig.x};
+		int diffY{y - checkingFig.y};
 
-		int modX{ diffX < 0 ? 1 : -1 };
+		int modX{diffX < 0 ? 1 : -1};
 		int tempX = modX;
-		int modY{ diffY < 0 ? 1 : -1 };
+		int modY{diffY < 0 ? 1 : -1};
 		int tempY = modY;
 
-		int n{ diffX < 0 ? -diffX : diffX };
+		int n{diffX < 0 ? -diffX : diffX};
 
 		switch (figureDirection)
 		{
 		case Figure::Directions::vertical:
-			for (int i{ 0 }; i < n - 1; ++i)
+			for (int i{0}; i < n - 1; ++i)
 			{
-				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y) and checkForObstacles(std::make_pair(Position(x, y), checkingFig)))
+				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y) and checkForObstacles(
+					std::make_pair(Position{x, y}, checkingFig), board))
 				{
-					if (diffY == 0) {
+					if (diffY == 0)
+					{
 						for (auto& pathField : checkingFigurePath)
 						{
-							if (pathField == Position(x + modX, y))
+							if (pathField == Position{x + modX, y})
 							{
 								return true;
 							}
@@ -1070,7 +1103,7 @@ public:
 					{
 						for (auto& pathField : checkingFigurePath)
 						{
-							if (pathField == Position(x, y + modY))
+							if (pathField == Position{x, y + modY})
 							{
 								return true;
 							}
@@ -1083,19 +1116,18 @@ public:
 
 
 		case Figure::Directions::horizontalAndVertical:
-			for (int i{ 0 }; i < n - 1; ++i)
+			for (int i{0}; i < n - 1; ++i)
 			{
-
-				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modY) and checkForObstacles(std::make_pair(Position(x, y), checkingFig)))
+				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modY) and checkForObstacles(
+					std::make_pair(Position{x, y}, checkingFig), board))
 				{
 					for (auto& pathField : checkingFigurePath)
 					{
-						if (pathField == Position(x + modX, y))
+						if (pathField == Position{x + modX, y})
 						{
 							return true;
 						}
 					}
-
 				}
 				modX += tempX;
 				modY += tempY;
@@ -1104,19 +1136,18 @@ public:
 
 
 		case Figure::Directions::diagonal:
-			for (int i{ 0 }; i < n - 1; ++i)
+			for (int i{0}; i < n - 1; ++i)
 			{
-
-				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modY) and checkForObstacles(std::make_pair(Position(x, y), checkingFig)))
+				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modY) and checkForObstacles(
+					std::make_pair(Position{x, y}, checkingFig), board))
 				{
 					for (auto& pathField : checkingFigurePath)
 					{
-						if (pathField == Position(x + modX, y + modY))
+						if (pathField == Position{x + modX, y + modY})
 						{
 							return true;
 						}
 					}
-
 				}
 				modX += tempX;
 				modY += tempY;
@@ -1125,15 +1156,16 @@ public:
 
 
 		case Figure::Directions::all:
-			for (int i{ 0 }; i < n - 1; ++i)
+			for (int i{0}; i < n - 1; ++i)
 			{
-				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modY) and checkForObstacles(std::make_pair(Position(x, y), checkingFig)))
+				if (!isSubscriptOutOfRange(checkingFig.x + modX, checkingFig.y + modY) and checkForObstacles(
+					std::make_pair(Position{x, y}, checkingFig), board))
 				{
 					if (diffY == 0)
 					{
 						for (auto& pathField : checkingFigurePath)
 						{
-							if (pathField == Position(x + modX, y))
+							if (pathField == Position{x + modX, y})
 							{
 								return true;
 							}
@@ -1143,7 +1175,7 @@ public:
 					{
 						for (auto& pathField : checkingFigurePath)
 						{
-							if (pathField == Position(x, y + modY))
+							if (pathField == Position{x, y + modY})
 							{
 								return true;
 							}
@@ -1153,7 +1185,7 @@ public:
 					{
 						for (auto& pathField : checkingFigurePath)
 						{
-							if (pathField == Position(x + modX, y + modY))
+							if (pathField == Position{x + modX, y + modY})
 							{
 								return true;
 							}
@@ -1166,161 +1198,111 @@ public:
 			return false;
 
 		case Figure::Directions::knight:
+		case Figure::Directions::pawn:
+		default:
+			return false;
+		}
+	}
 
+	bool canDefendKing(const std::array<std::array<Field, 8>, 8>& board)
+	{
+		for (int x{0}; x < 8; ++x)
+		{
+			for (int y{0}; y < 8; ++y)
+			{
+				if (!board[x][y].isEmpty())
+				{
+					if (turn == board[x][y].getFigureColor() and canBlockPathOfCheckingFigure(
+						x, y, checkingFigure, board))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	void isCheckMate(const std::array<std::array<Field, 8>, 8>& board)
+	{
+		if (checkCheck(board))
+		{
+			if (!canKingMove(board) and !canKillCheckingFigure(board) and !canDefendKing(board))
+			{
+				std::cout << "checkmate";
+				checkMate = true;
+			}
+		}
+	}
+
+	bool checkMoveDataForNullptr(const auto& moveData, const std::array<std::array<Field, 8>, 8>& board)
+	{
+		return board[moveData.first.x][moveData.first.y].isEmpty();
+	}
+
+	bool checkIfMoveIsPossible(const auto& moveData)
+	{
+		auto fieldsCopy{fields};
+
+		if (turn != fieldsCopy[moveData.first.x][moveData.first.y].getFigureColor())
+		{
 			return false;
 		}
 
-		return false;
+		if (!checkIfFigureMoveIsCorrect(moveData, fieldsCopy) and checkForObstacles(moveData, fieldsCopy))
+		{
+			return false;
+		}
+
+		fieldsCopy[moveData.second.x][moveData.second.y].placeFigure(
+			std::move(fieldsCopy[moveData.first.x][moveData.first.y].pickFigure()));
+
+		if (checkCheck(fieldsCopy))
+		{
+			return false;
+		}
+
+		return true;
 	}
 
-	bool canDefendKing()
+
+	void move(const auto& moveData)
 	{
-		for (int x{ 0 }; x < 8; ++x)
+		if (checkIfMoveIsPossible(moveData))
 		{
-			for (int y{ 0 }; y < 8; ++y)
+			fields[moveData.second.x][moveData.second.y].placeFigure(
+				std::move(fields[moveData.first.x][moveData.first.y].pickFigure()));
+
+			if (fields[moveData.second.x][moveData.second.y].isPawn() and (moveData.second.x == 0 or moveData.second.x
+				==
+				7))
 			{
-				if (!fields[x][y].isEmpty())
-				{
-					if (Chess::getTurn() and fields[x][y].getFigureColor() == Figure::FigureColor::white)
-					{
-						if (canBlockPathOfCheckingFigure(x, y, checkingFigure))
-						{
-							return true;
-						}
-					}
-					if (!Chess::getTurn() and fields[x][y].getFigureColor() == Figure::FigureColor::black)
-					{
-						if (canBlockPathOfCheckingFigure(x, y, checkingFigure))
-						{
-							return true;
-						}
-					}
-				}
+				promote(moveData);
+			}
+
+			enemyKing = getKingPosition(fields);
+
+			if (fields[moveData.second.x][moveData.second.y].isPawn())
+			{
+				fields[moveData.second.x][moveData.second.y].pawnFirstMoveDone();
 			}
 		}
-		return false;
 	}
 
-	bool isCheckMate()
+	friend std::ostream& operator <<(std::ostream& out, const Board& b)
 	{
-		if (checkCheck()) {
-			if (!canKingMove() and !canKillCheckingFigure() and !canDefendKing())
-			{
-				std::cout << "checkmate";
-				return true;
-
-			}
-		}
-		return false;
-	}
-
-	bool checkMoveDataForNullptr(auto moveData)
-	{
-		if (fields[moveData.first.x][moveData.first.y].isEmpty() or fields[moveData.second.x][moveData.second.y].isEmpty())
-		{
-			return true;
-		}
-		return false;
-	}
-
-	void move(auto moveData)
-	{
-		std::unique_ptr<Figure> tempFigure{};
-		if(checkCheck())
-		{
-			std::cout << "check";
-		}
-
-		if (Chess::getTurn() and fields[moveData.first.x][moveData.first.y].getFigureColor() == Figure::FigureColor::white)
-		{
-			if (checkIfMovePossible(moveData) and !checkForObstacles(moveData))
-			{
-				tempFigure = fields[moveData.second.x][moveData.second.y].pickFigure();
-
-				fields[moveData.second.x][moveData.second.y].placeFigure(std::move(fields[moveData.first.x][moveData.first.y].pickFigure()));
-
-				if (checkCheck())
-				{
-					check = true;
-				}
-
-				if (!check and fields[moveData.second.x][moveData.second.y].isPawn() and moveData.second.x == 0)
-				{
-					promote(moveData);
-				}
-
-				if (check)
-				{
-					fields[moveData.first.x][moveData.first.y].placeFigure(std::move(fields[moveData.second.x][moveData.second.y].pickFigure()));
-					fields[moveData.second.x][moveData.second.y].placeFigure(std::move(tempFigure));
-
-					Chess::changeTurn();
-				}
-
-				enemyKing = getKingPosition();
-				Chess::changeTurn();
-			}
-
-		}
-		else if (!Chess::getTurn() and fields[moveData.first.x][moveData.first.y].getFigureColor() == Figure::FigureColor::black)
-		{
-			if (checkIfMovePossible(moveData) and !checkForObstacles(moveData))
-			{
-				tempFigure = fields[moveData.second.x][moveData.second.y].pickFigure();
-
-				fields[moveData.second.x][moveData.second.y].placeFigure(std::move(fields[moveData.first.x][moveData.first.y].pickFigure()));
-
-				if (checkCheck())
-				{
-					check = true;
-				}
-
-				if(!check and fields[moveData.second.x][moveData.second.y].isPawn() and moveData.second.x==7 )
-				{
-					promote(moveData);
-				}
-
-
-
-				if (check)
-				{
-					fields[moveData.first.x][moveData.first.y].placeFigure(std::move(fields[moveData.second.x][moveData.second.y].pickFigure()));
-					fields[moveData.second.x][moveData.second.y].placeFigure(std::move(tempFigure));
-
-					Chess::changeTurn();
-				}
-				enemyKing = getKingPosition();
-				Chess::changeTurn();
-
-			}
-			else
-			{
-				std::cout << "wrong move\n" << std::endl;
-			}
-		}
-		else if (Chess::getTurn() and fields[moveData.first.x][moveData.first.y].getFigureColor() == Figure::FigureColor::black or !Chess::getTurn() and fields[moveData.first.x][moveData.first.y].getFigureColor() == Figure::FigureColor::white)
-		{
-			std::cout << "wrong figure\n";
-		}
-
-		if(fields[moveData.second.x][moveData.second.y].isPawn())
-		{
-			fields[moveData.second.x][moveData.second.y].pawnFirstMoveDone();
-		}
-
-	}
-
-	friend std::ostream& operator << (std::ostream& out, const Board& b) {
 		out << ' ';
-		for (char letter{ 'a' }; letter < 'a' + 8; ++letter)
+		for (char letter{'a'}; letter < 'a' + 8; ++letter)
 		{
 			out << ' ' << letter << ' ';
 		}
-		for (int row{ 0 }; row < 8; ++row) {
-			out << std::endl;
+		for (int row{0}; row < 8; ++row)
+		{
+			out << '\n';
 			out << row + 1;
 
-			for (int col{ 0 }; col < 8; ++col) {
+			for (int col{0}; col < 8; ++col)
+			{
 				out << b.fields[row][col];
 			}
 		}
@@ -1328,9 +1310,10 @@ public:
 	}
 
 private:
-	std::array<std::array<Field, 8>, 8> fields{};
+	bool check{false};
 	Position checkingFigure{};
+	bool checkMate{false};
 	std::pair<Position, Position> enemyKing{};
-	bool check{ false };
-
+	std::array<std::array<Field, 8>, 8> fields{};
+	const Color& turn;
 };
