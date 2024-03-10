@@ -8,6 +8,16 @@
 class Figure
 {
 public:
+	enum class Figures
+	{
+		pawn,
+		rook,
+		knight,
+		bishop,
+		queen,
+		king
+	};
+
 	enum class Directions
 	{
 		vertical,
@@ -40,55 +50,20 @@ public:
 		Modifiers modifier;
 	};
 
+	//std::map<Figures, char> figureToChar;
 
-	enum class Figures
-	{
-		pawn,
-		rook,
-		knight,
-		bishop,
-		queen,
-		king
-	};
+	Figure(Figures, Color);
+	virtual ~Figure();
 
-	std::map<Figures, char> Figure_To_Char = {
-		{Figures::pawn, 'P'},
-		{Figures::rook, 'R'},
-		{Figures::knight, 'N'},
-		{Figures::bishop, 'B'},
-		{Figures::queen, 'Q'},
-		{Figures::king, 'K'}
-	};
+	void setFigureColor(Color);
 
-	Figure() = default;
-	virtual ~Figure() = default;
+	Color getColor() const;
 
-	Figure(Figures fn, Color fc) : figureN(fn), figureColor(fc)
-	{
-	}
-
-	void setFigureColor(Color fc)
-	{
-		figureColor = fc;
-	}
-
-	Color getColor() const
-	{
-		return figureColor;
-	}
-
-	Figures getFigure() const
-	{
-		return figureN;
-	}
+	Figures getFigure() const;
 
 	virtual MoveSchema getMoveSchema() const = 0;
 
-	friend std::ostream& operator <<(std::ostream& out, const Figure& fig)
-	{
-		out << fig.Figure_To_Char.at(fig.figureN);
-		return out;
-	}
+	friend std::ostream& operator <<(std::ostream&, const Figure&);
 
 private:
 	Figures figureN;

@@ -6,15 +6,9 @@
 class Queen : public Figure
 {
 public:
-	Queen(Color fc) : Figure(Figures::queen, fc)
-	{
-	}
+	Queen(Color);
 
-
-	MoveSchema getMoveSchema() const override
-	{
-		return ms;
-	}
+	MoveSchema getMoveSchema() const override;
 
 private:
 	MoveSchema ms{Directions::all, Length::noLimit, Modifiers::none};

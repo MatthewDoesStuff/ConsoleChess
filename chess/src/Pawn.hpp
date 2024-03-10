@@ -6,22 +6,11 @@
 class Pawn : public Figure
 {
 public:
-	Pawn(Color fc) : Figure(Figures::pawn, fc)
-	{
-	}
+	Pawn(Color);
 
-	void firstMoveDone()
-	{
-		firstMove = false;
-	}
+	void firstMoveDone();
 
-	MoveSchema getMoveSchema() const override
-	{
-		MoveSchema ms{Directions::vertical, Length::two, Modifiers::onlyTowardsEnemy};
-		ms.length = firstMove ? Length::two : Length::one;
-
-		return ms;
-	}
+	MoveSchema getMoveSchema() const override;
 
 protected:
 	bool firstMove{true};

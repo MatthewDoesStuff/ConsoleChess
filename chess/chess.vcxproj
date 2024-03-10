@@ -130,6 +130,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\Bishop.cpp" />
+    <ClCompile Include="src\Board.cpp" />
+    <ClCompile Include="src\Chess.cpp" />
+    <ClCompile Include="src\Converter.cpp" />
+    <ClCompile Include="src\Field.cpp" />
+    <ClCompile Include="src\Figure.cpp" />
+    <ClCompile Include="src\King.cpp" />
+    <ClCompile Include="src\Knight.cpp" />
+    <ClCompile Include="src\Pawn.cpp" />
+    <ClCompile Include="src\Queen.cpp" />
+    <ClCompile Include="src\Rook.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Bishop.hpp" />

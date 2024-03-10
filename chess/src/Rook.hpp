@@ -6,15 +6,9 @@
 class Rook : public Figure
 {
 public:
-	Rook(Color fc) : Figure(Figures::rook, fc)
-	{
-	}
+	Rook(Color);
 
-
-	MoveSchema getMoveSchema() const override
-	{
-		return ms;
-	}
+	MoveSchema getMoveSchema() const override;
 
 private:
 	MoveSchema ms{Directions::horizontalAndVertical, Length::noLimit, Modifiers::none};

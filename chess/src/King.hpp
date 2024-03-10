@@ -6,15 +6,9 @@
 class King : public Figure
 {
 public:
-	King(Color fc) : Figure(Figures::king, fc)
-	{
-	}
+	King(Color);
 
-
-	MoveSchema getMoveSchema() const override
-	{
-		return ms;
-	}
+	MoveSchema getMoveSchema() const override;
 
 private:
 	MoveSchema ms{Directions::all, Length::one, Modifiers::king};

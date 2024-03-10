@@ -6,15 +6,9 @@
 class Bishop : public Figure
 {
 public:
-	Bishop(Color fc) : Figure(Figures::bishop, fc)
-	{
-	}
+	Bishop(Color);
 
-
-	MoveSchema getMoveSchema() const override
-	{
-		return ms;
-	}
+	MoveSchema getMoveSchema() const override;
 
 private:
 	MoveSchema ms{Directions::diagonal, Length::noLimit, Modifiers::none};

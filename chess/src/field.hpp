@@ -10,105 +10,31 @@ class Field
 {
 public:
 	Field() = default;
+	~Field() = default;
 
-	void setColor(Color c)
-	{
-		fieldColor = c;
-	}
+	void setColor(Color);
 
-	void setFigure(std::shared_ptr<Figure> fi)
-	{
-		figure = std::move(fi);
-	}
+	void setFigure(std::shared_ptr<Figure>);
 
-	Color getFigureColor() const
-	{
-		return figure->getColor();
-	}
+	Color getFigureColor() const;
 
-	Figure::Figures getFigureFromField() const
-	{
-		return figure->getFigure();
-	}
+	Figure::Figures getFigureFromField() const;
 
-	Figure::MoveSchema getFigureSchema() const
-	{
-		return figure->getMoveSchema();
-	}
+	Figure::MoveSchema getFigureSchema() const;
 
-	bool isEmpty() const
-	{
-		return !figure;
-	}
+	bool isEmpty() const;
 
-	bool isKing() const
-	{
-		return !isEmpty() and figure->getFigure() == Figure::Figures::king;
-	}
+	bool isKing() const;
 
-	void pawnFirstMoveDone()
-	{
-		dynamic_cast<Pawn*>(figure.get())->firstMoveDone();
-	}
+	void pawnFirstMoveDone();
 
-	bool isPawn() const
-	{
-		return !isEmpty() and figure->getFigure() == Figure::Figures::pawn;
-	}
+	bool isPawn() const;
 
-	friend std::ostream& operator <<(std::ostream& out, const Field& fie)
-	{
-		if (fie.fieldColor == Color::white)
-		{
-			out << "\x1b[0;47m" << ' ';
-			if (fie.figure)
-			{
-				if (fie.figure->getColor() == Color::white)
-				{
-					out << "\x1b[32m" << *fie.figure << ' ' << "\x1b[0;47m";
-				}
-				else if (fie.figure->getColor() == Color::black)
-				{
-					out << "\x1b[31m" << *fie.figure << ' ' << "\x1b[0;47m";
-				}
-			}
-			else
-			{
-				out << ' ' << ' ';
-			}
-		}
-		else if (fie.fieldColor == Color::black)
-		{
-			out << "\x1b[0;40m" << ' ';
-			if (fie.figure)
-			{
-				if (fie.figure->getColor() == Color::white)
-				{
-					out << "\x1b[32m" << *fie.figure << ' ' << "\x1b[0;40m";
-				}
-				else if (fie.figure->getColor() == Color::black)
-				{
-					out << "\x1b[31m" << *fie.figure << ' ' << "\x1b[0;40m";
-				}
-			}
-			else
-			{
-				out << ' ' << ' ';
-			}
-		}
-		out << "\x1b[0;0m";
-		return out;
-	}
+	std::shared_ptr<Figure> pickFigure();
 
-	std::shared_ptr<Figure> pickFigure()
-	{
-		return std::move(figure);
-	}
+	void placeFigure(std::shared_ptr<Figure>);
 
-	void placeFigure(std::shared_ptr<Figure> pf)
-	{
-		figure = std::move(pf);
-	}
+	friend std::ostream& operator <<(std::ostream&, const Field&);
 
 private:
 	Color fieldColor;
